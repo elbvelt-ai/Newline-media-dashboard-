@@ -1,0 +1,19 @@
+# dependencies and build output
+node_modules/
+web/.next/
+web/out/
+*.tsbuildinfo
+
+# secrets and local config: never commit
+.env
+.env.*
+!.env.example
+web/.env.local
+
+# local tooling
+.claude/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,0 +1,202 @@
+{
+  "name": "NLM Dashboard Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "name": "Every 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://desk.zoho.com/api/v1/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "include",
+              "value": "assignee,contacts"
+            },
+            {
+              "name": "sortBy",
+              "value": "-createdTime"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "orgId",
+              "value": "724456307"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "from",
+                    "value": "={{ $pageCount * 100 + 1 }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body || !$response.body.data || $response.body.data.length < 100 }}",
+              "limitPagesFetched": true,
+              "maxRequests": 200
+            }
+          }
+        }
+      },
+      "name": "Zoho Get Tickets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Zoho Desk OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map Zoho Desk ticket -> tickets table columns\nconst now = new Date().toISOString();\nconst ts = v => (v ? new Date(v).toISOString() : null);\nconst a = $input.all().map(i => i.json);\nreturn a.map(t => ({ json: {\n  ticket_id: String(t.id),\n  ticket_number: t.ticketNumber ? String(t.ticketNumber) : null,\n  subject: t.subject || null,\n  status: t.status || null,\n  priority: t.priority || null,\n  assignee_id: t.assigneeId || null,\n  assignee: t.assignee ? ((t.assignee.firstName || '') + ' ' + (t.assignee.lastName || '')).trim() : null,\n  department: t.department ? t.department.name : null,\n  account: (t.contact && t.contact.account && t.contact.account.accountName) || null,\n  category: t.category || null,\n  sub_category: t.subCategory || null,\n  created_time: ts(t.createdTime),\n  due_date: ts(t.dueDate),\n  closed_time: ts(t.closedTime),\n  modified_time: ts(t.modifiedTime),\n  updated_at: now\n}}));"
+      },
+      "name": "Map Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "tickets"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null,
+          "matchingColumns": [
+            "ticket_id"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "name": "Upsert tickets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_ME",
+          "name": "NLM Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 min": {
+      "main": [
+        [
+          {
+            "node": "Zoho Get Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zoho Get Tickets": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Map Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Fields": {
+      "main": [
+        [
+          {
+            "node": "Upsert tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

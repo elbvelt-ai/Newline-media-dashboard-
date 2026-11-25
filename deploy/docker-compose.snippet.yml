@@ -1,0 +1,12 @@
+# Add this service to ~/n8n-stack/docker-compose.yml (same network as postgres/caddy).
+# Copy the repo's web/ folder to ~/n8n-stack/web/ first.
+  dashboard:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://n8n:${POSTGRES_PASSWORD}@postgres:5432/n8n
+      AUTH_SECRET: ${DASHBOARD_AUTH_SECRET}
+      SHOW_ANALYSTS_TO_MARKETS: "false"
+    # no ports: only Caddy reaches it

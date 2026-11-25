@@ -1,0 +1,5 @@
+# Add inside the existing newlinemedia.duckdns.org block in ~/n8n-stack/Caddyfile,
+# ABOVE the catch-all reverse_proxy to n8n.
+	handle /dashboard* {
+		reverse_proxy dashboard:3000
+	}
