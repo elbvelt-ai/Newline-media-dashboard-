@@ -60,7 +60,7 @@ export async function getDashboard(user: User, market: string | null) {
       `SELECT COALESCE(t.ticket_number, t.ticket_id) AS number, t.subject, t.status, t.priority, ${asg} AS assignee,
               COALESCE(NULLIF(t.category,''),'Untagged') AS category, COALESCE(NULLIF(t.sub_category,''),'Untyped') AS type,
               t.created_time, t.due_date, t.closed_time, t.modified_time
-       ${scope} AND (${OPEN} OR t.closed_time >= now() - interval '30 days')
+       ${scope}
        ORDER BY t.created_time DESC LIMIT 1500`, p),
     pool.query(`SELECT max(updated_at) AS s FROM tickets`),
     user.isMaster
