@@ -11,6 +11,10 @@ import type { getDashboard } from "@/lib/data";
 type Data = Awaited<ReturnType<typeof getDashboard>>;
 type View = "overview" | "breakdown" | "tickets";
 
+// The real New Line Media logo — same source the proposal-email workflow already pulls from,
+// so both places stay in sync if the file is ever replaced.
+const NLM_LOGO = "https://drive.google.com/uc?export=download&id=18hZ1EkWIYL__lEJtiuRwK94de9yXLuFu";
+
 const ITEMS: (DockItem & { description: string })[] = [
   { id: "overview", label: "Overview", short: "Overview", icon: LayoutDashboard, description: "Open work, what is closing, and what needs attention." },
   { id: "breakdown", label: "Breakdown", short: "Breakdown", icon: BarChart3, description: "Where tickets come from: type, market and team." },
@@ -90,7 +94,7 @@ export default function NlmDashboard({ data, label, isMaster, market, showAnalys
         <header className="gd-top">
           <div className="gd-brand">
             <span className="gd-logo" aria-hidden="true">
-              <svg viewBox="0 0 28 28" fill="none"><path d="m5 22 7.4-16h3.2L23 22h-4l-5-11.4L9 22H5Z" fill="currentColor" /><path d="M10 18h8l1.4 3h-10.8l1.4-3Z" fill="currentColor" /></svg>
+              <img src={NLM_LOGO} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
             </span>
             <div><strong>NEW LINE MEDIA</strong><small>Support dashboard</small></div>
           </div>
